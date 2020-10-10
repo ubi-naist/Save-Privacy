@@ -1,0 +1,14 @@
+version: '2.3'
+
+services:
+  notebook:
+    build: .
+    runtime: nvidia
+    restart: always
+    env_file: .env
+    ports:
+      - "8888:8888"
+      # tensorboard用
+      # - "6006:6006"
+    volumes:
+      - ./notebooks:/notebooks
