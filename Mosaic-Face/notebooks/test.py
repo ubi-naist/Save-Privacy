@@ -28,7 +28,9 @@ parser = argparse.ArgumentParser(description='Single Shot MultiBox Detection')
 parser.add_argument('--trained_model', default='weights/light_DSFD.pth',
                     type=str, help='Trained state_dict file path to open')
 
-parser.add_argument('--save_folder', default='eval_tools/light_DSFD/', type=str,
+# parser.add_argument('--save_folder', default='eval_tools/light_DSFD/', type=str,
+#                     help='mosaiced img folder ')
+parser.add_argument('--save_folder', default='data/output/test/imgs/', type=str,
                     help='mosaiced img folder ')
 parser.add_argument('--visual_threshold', default=0.9, type=float,
                     help='Final confidence threshold')
@@ -36,10 +38,14 @@ parser.add_argument('--area_scale', default=1.25, type=float,
                     help='scale of mosaic area')
 parser.add_argument('--cuda', default=True, type=bool,
                     help='Use cuda to train model')
-parser.add_argument('--video_folder', default='', type=str,
+# parser.add_argument('--video_folder', default='', type=str,
+#                     help='origin video folder')
+parser.add_argument('--video_folder', default='data/input/test/', type=str,
                     help='origin video folder')
 parser.add_argument('--widerface_root', default=WIDERFace_ROOT, help='Location of VOC root directory')
-parser.add_argument('--video_output', default='/home/rvlab/Desktop/', type=str,
+# parser.add_argument('--video_output', default='/home/rvlab/Desktop/', type=str,
+#                     help='processed video folder ')
+parser.add_argument('--video_output', default='data/output/test/videos/', type=str,
                     help='processed video folder ')
 args = parser.parse_args()
 
@@ -228,7 +234,8 @@ def make_video_from_images(save_folder, img_paths, outvid_path, fps=25, size=Non
 
 
 def delete_imgs(img_folder):
-    img_list = os.listdir(img_folder)
+#     img_list = os.listdir(img_folder)
+    img_list = [filename for filename in os.listdir(img_folder) if not filename.startswith('.')] #隠しフォルダを除く
     for img in img_list:
         os.remove(img_folder + img)
     return print('imgs of last video have been removed')
@@ -255,13 +262,17 @@ def main():
     transform = TestBaseTransform((104, 117, 123))
     thresh = cfg['conf_thresh']
 
-    save_folder = args.save_folder
+    save_folder = args.save_folder 
 
-    video_folder_list = os.listdir(args.video_folder)
+#     video_folder_list = os.listdir(args.video_folder)
+    video_folder_list = [filename for filename in os.listdir(args.video_folder) if not filename.startswith('.')] #隠しフォルダを除く
     for video in video_folder_list:
         frame_id = 0
         video_name = os.path.splitext(os.path.split(video)[1])[0]
         cap = cv2.VideoCapture(args.video_folder + video)
+        
+        os.makedirs(save_folder+video_name)
+        
         while True:
             _, frame = cap.read()
             if not _:
@@ -273,8 +284,9 @@ def main():
             print('prossing:', frame_id)
             if det[0][0] == 0.1:
                 cv2.imwrite(save_folder + video_name + '_' + '{:09d}.jpg'.format(frame_id), frame)
-            save_mosaiced_img(frame, det, save_folder, video_name, frame_id, scale=args.area_scale,thresh=args.visual_threshold)
-        save_folder_list = os.listdir(save_folder)
+            save_mosaiced_img(frame, det, save_folder+video_name+"/", video_name, frame_id, scale=args.area_scale,thresh=args.visual_threshold)
+#         save_folder_list = os.listdir(save_folder)
+        save_folder_list = [filename for filename in os.listdir(save_folder) if not filename.startswith('.')] #隠しフォルダを除く
         save_folder_list.sort()
         make_video_from_images(save_folder, save_folder_list,
                                os.path.join(args.video_output, video_name + '.mp4'),
