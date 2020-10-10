@@ -1,4 +1,4 @@
-# Mosaic Face
+# Mosaic-Face
 モザイクをかけるモジュール @Yohei Katayama
 
 2020年秋卒業のDang Chenyuさんが作成したものを改変．
