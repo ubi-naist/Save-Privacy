@@ -9,3 +9,7 @@ RUN pip install https://github.com/ipython-contrib/jupyter_contrib_nbextensions/
 plotly yapf keras pydot graphviz seaborn autopep8 jupyter_contrib_nbextensions
 
 RUN jupyter contrib nbextension install --user && jupyter nbextensions_configurator enable --user
+
+
+#以下katayama追記########
+RUN pip install jupyterlab

@@ -7,7 +7,7 @@ services:
     restart: always
     env_file: .env
     ports:
-      - "8888:8888"
+      - "7778:8888"
       # tensorboard用
       # - "6006:6006"
     volumes:
