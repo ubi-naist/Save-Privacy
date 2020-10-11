@@ -27,9 +27,6 @@ plt.switch_backend('agg')
 parser = argparse.ArgumentParser(description='Single Shot MultiBox Detection')
 parser.add_argument('--trained_model', default='weights/light_DSFD.pth',
                     type=str, help='Trained state_dict file path to open')
-
-# parser.add_argument('--save_folder', default='eval_tools/light_DSFD/', type=str,
-#                     help='mosaiced img folder ')
 parser.add_argument('--save_folder', default='data/output/test/', type=str,
                     help='mosaiced img folder ')
 parser.add_argument('--visual_threshold', default=0.9, type=float,
@@ -38,24 +35,16 @@ parser.add_argument('--area_scale', default=1.25, type=float,
                     help='scale of mosaic area')
 parser.add_argument('--cuda', default=True, type=bool,
                     help='Use cuda to train model')
-# parser.add_argument('--video_folder', default='', type=str,
-#                     help='origin video folder')
-parser.add_argument('--video_folder', default='data/input/test/', type=str,
+parser.add_argument('--video_folder', default='data/input/test01/', type=str,
                     help='origin video folder')
 parser.add_argument('--widerface_root', default=WIDERFace_ROOT, help='Location of VOC root directory')
-# parser.add_argument('--video_output', default='/home/rvlab/Desktop/', type=str,
-#                     help='processed video folder ')
-# parser.add_argument('--video_output', default='data/output/test/videos/', type=str,
-#                     help='processed video folder ')
+
 args = parser.parse_args()
 
 if args.cuda and torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
 else:
     torch.set_default_tensor_type('torch.FloatTensor')
-
-if not os.path.exists(args.save_folder):
-    os.mkdir(args.save_folder)
 
 
 def bbox_vote(det):
@@ -215,10 +204,7 @@ def make_video_from_images(save_folder, img_paths, outvid_path, fps=25, size=Non
     It will resize every image to this size before adding them to the video.
     """
     fourcc = cv2.VideoWriter_fourcc(*format)
-#     fourcc =cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
-    fourcc = cv2.VideoWriter_fourcc(*"H", "2", "6", "4")
     vid = None
-    fps = 60
     for ct, img_path in enumerate(img_paths):
         img = cv2.imread(save_folder + img_path)
         if img is None:
@@ -238,7 +224,6 @@ def make_video_from_images(save_folder, img_paths, outvid_path, fps=25, size=Non
 
 
 def delete_imgs(img_folder):
-#     img_list = os.listdir(img_folder)
     img_list = [filename for filename in os.listdir(img_folder) if not filename.startswith('.')] #隠しフォルダを除く
     for img in img_list:
         os.remove(img_folder + img)
@@ -268,13 +253,12 @@ def main():
 
     
 
-#     video_folder_list = os.listdir(args.video_folder)
-    video_folder_list = [filename for filename in os.listdir(args.video_folder) if not filename.startswith('.')] #隠しフォルダを除く
+    video_folder_list = sorted([filename for filename in os.listdir(args.video_folder) if not filename.startswith('.')]) #隠しフォルダを除く
     for video in video_folder_list:
         frame_id = 0
         video_name = os.path.splitext(os.path.split(video)[1])[0]
         cap = cv2.VideoCapture(args.video_folder + video)
-        print(cap.get(cv2.CAP_PROP_FPS))
+        original_fps = cap.get(cv2.CAP_PROP_FPS)
         save_folder = args.video_folder.replace("input", "output")
         save_folder_img = save_folder + "imgs/" 
         save_folder_video = save_folder + "videos/" 
@@ -283,24 +267,23 @@ def main():
             os.makedirs(save_folder_img)
             os.makedirs(save_folder_video)
         
-#         while True:
-#             _, frame = cap.read()
-#             if not _:
-#                 break
-#             frame_id += 1
-#             # if frame_id<=1358:
-#             #     continue
-#             det = infer(net, frame, transform, thresh, cuda, shrink)
-#             print('prossing:', frame_id)
-#             if det[0][0] == 0.1:
-#                 cv2.imwrite(save_folder_img + video_name + '_' + '{:09d}.jpg'.format(frame_id), frame)
-#             save_mosaiced_img(frame, det, save_folder_img, video_name, frame_id, scale=args.area_scale,thresh=args.visual_threshold)
-        save_folder_list = [filename for filename in os.listdir(save_folder_img) if not filename.startswith('.')] #隠しフォルダを除く
-        save_folder_list.sort()
+        while True:
+            _, frame = cap.read()
+            if not _:
+                break
+            frame_id += 1
+            # if frame_id<=1358:
+            #     continue
+            det = infer(net, frame, transform, thresh, cuda, shrink)
+            print('prossing:', frame_id)
+            if det[0][0] == 0.1:
+                cv2.imwrite(save_folder_img + video_name + '_' + '{:09d}.jpg'.format(frame_id), frame)
+            save_mosaiced_img(frame, det, save_folder_img, video_name, frame_id, scale=args.area_scale,thresh=args.visual_threshold)
+        save_folder_list = sorted([filename for filename in os.listdir(save_folder_img) if not filename.startswith('.')]) #隠しフォルダを除く
         make_video_from_images(save_folder_img, save_folder_list,
                                os.path.join(save_folder_video, video_name + '.mp4'),
-                               fps=60)
-        #delete_imgs(save_folder_img)
+                               fps=original_fps)
+        delete_imgs(save_folder_img)
 
 
 if __name__ == '__main__':
