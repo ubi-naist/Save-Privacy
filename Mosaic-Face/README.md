@@ -19,8 +19,9 @@ Run test.py and change parameters of save_folder, video_folder, and video_output
 
 ### 2. マスキング処理を実行
  
-    $ test.py 
-    
+    $ python3 test.py 
+    $ ex) python3 test.py --video_folder data/input/test01/
+     
 
 
 ## 注意
