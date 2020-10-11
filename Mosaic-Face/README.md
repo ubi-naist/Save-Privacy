@@ -7,9 +7,16 @@
 ## Introduction
 Mosaic pedestrians' faces for protecting their pravicy.
 
-ubi-dl03サーバにコンテナとしておいてあります．
+ubi-dl03サーバにコンテナとして作成済み．
 
 ## Instalation
+
+    $ git clone https://github.com/ubi-naist/Save-Privacy.git
+    $ cd Save-Privacy/Mosaic-Face
+
+ホスト側（左）のポート番号を変更 8888→XXXX
+
+    $ vi docker-compose.yml
 
 イメージのビルド
 
@@ -23,7 +30,7 @@ ubi-dl03サーバにコンテナとしておいてあります．
     
     $ docker exec -i -t facemask_notebook_1 bash
     $ もしくは
-    $ ブラウザから7778番ポートにアクセスしてjupyterを起動．　下はdl03サーバで起動している場合
+    $ ブラウザからxxxx番ポートにアクセスしてjupyterを起動．　下はdl03サーバのコンテナを利用の場合
     $ ex) ubi-dl03.naist.jp:7778/lab?
 
 
