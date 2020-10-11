@@ -14,7 +14,7 @@ Run test.py and change parameters of save_folder, video_folder, and video_output
 
 ### 1. notebooks/data/input以下にマスキング処理をしたい動画の入ったフォルダを配置する．
  
-   例 notebooks/data/input/test/Sample01.mp4
+    $ ex) notebooks/data/input/test/Sample01.mp4
 
 
 ### 2. マスキング処理を実行
