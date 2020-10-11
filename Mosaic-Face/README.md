@@ -9,6 +9,26 @@ Mosaic pedestrians' faces for protecting their pravicy.
 
 ubi-dl03サーバにコンテナとしておいてあります．
 
+## Instalation
+
+イメージのビルド
+
+    $ docker-compose build
+    
+イメージの起動
+    
+    $ docker-compose up -d
+    
+イメージにアクセス
+    
+    $ docker exec -i -t facemask_notebook_1 bash
+    $ もしくは
+    $ ブラウザから7778番ポートにアクセスしてjupyterを起動．　下はdl03サーバで起動している場合
+    $ ex) ubi-dl03.naist.jp:7778/lab?
+
+
+
+
 ## Usage
 Run test.py and change parameters of save_folder, video_folder, and video_output with your own configuration. 
 
