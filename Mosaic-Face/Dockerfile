@@ -1,36 +1,24 @@
-FROM tensorflow/tensorflow:1.12.0-gpu-py3
+FROM continuumio/anaconda3
 
-RUN apt-get update && apt-get install -y \
-    git graphviz
+RUN conda update --all
+#RUN conda install keras-gpu
+#RUN conda install opencv
+RUN conda install -c conda-forge jupyterlab
+RUN conda install -c conda-forge opencv
 
-RUN pip install --upgrade pip
+RUN jupyter notebook --generate-config
+#RUN jupyter-lab --generate-config
+RUN echo "c.NotebookApp.ip = '0.0.0.0'" >> /root/.jupyter/jupyter_notebook_config.py
+RUN export TF_FORCE_GPU_ALLOW_GROWTH=true
 
-RUN pip install https://github.com/ipython-contrib/jupyter_contrib_nbextensions/tarball/master \
-plotly yapf keras pydot graphviz seaborn autopep8 jupyter_contrib_nbextensions
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES utility,compute
+RUN export TF_FORCE_GPU_ALLOW_GROWTH=true
 
-RUN jupyter contrib nbextension install --user && jupyter nbextensions_configurator enable --user
+RUN conda install pytorch-gpu torchvision 
 
-#以下katayama追記########
-RUN pip install jupyterlab
-RUN pip install jupyter-console
-RUN pip install numpy
-RUN pip install pandas
-
-# ffmpeg
-RUN apt-get update
-RUN apt-get install -y ffmpeg
-
-# OpenCV
-RUN apt-get update && apt-get install -y libopencv-dev
-RUN pip install --upgrade pip
-RUN pip install opencv-python
-
-
-RUN pip install torch===1.1.0 torchvision==0.3.0
-
-
-# jupyter 拡張機能
-#RUN jupyter labextension install @jupyterlab/toc
-
-#########################
-
+RUN conda install -c conda-forge ffmpeg
+RUN apt-get install -y libgl1-mesa-dev
+WORKDIR /notebooks
+CMD bash
+CMD jupyter-lab --allow-root --NotebookApp.token=''
