@@ -44,6 +44,8 @@ parser.add_argument('--widerface_root', default=WIDERFace_ROOT, help='Location o
 # mosaic_scaleの参考値 #1.25 顔, 1.50:マージン大きめ(default)
 # mosaic_densityの参考値 #15:マスク薄め, 35:マスク濃いめ(default)
 
+args = parser.parse_args() 
+
 if args.cuda and torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
 else:
@@ -131,7 +133,7 @@ def infer(net, img, transform, thresh, cuda, shrink):
         return det
 
 
-def save_mosaiced_img(im, dets, save_folder, image_name, frame_id, scale=1.50,thresh=0.5, kernel_size=35):
+def save_mosaiced_img(im, dets, save_folder, image_name, frame_id, scale=1.5,thresh=0.5, kernel_size=35):
     """Draw detected bounding boxes."""
     class_name = 'face'
     inds = np.where(dets[:, -1] >= thresh)[0]
