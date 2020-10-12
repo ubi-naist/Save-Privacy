@@ -2,7 +2,8 @@
 モザイクをかけるモジュール @Yohei Katayama
 
 2020年秋卒業のDang Chenyuさんが作成したものを改変．
- 
+
+モデルには[LightDSFD](https://github.com/lijiannuist/lightDSFD)を利用．
 
 ## Introduction
 Mosaic pedestrians' faces for protecting their pravicy.
