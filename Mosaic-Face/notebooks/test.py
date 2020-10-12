@@ -31,15 +31,18 @@ parser.add_argument('--save_folder', default='data/output/test/', type=str,
                     help='mosaiced img folder ')
 parser.add_argument('--visual_threshold', default=0.9, type=float,
                     help='Final confidence threshold')
-parser.add_argument('--area_scale', default=1.25, type=float,
+parser.add_argument('--mosaic_scale', default=1.50, type=float,
                     help='scale of mosaic area')
+parser.add_argument('--mosaic_density', default=35, type=int,
+                    help='density of mosaic area')
 parser.add_argument('--cuda', default=True, type=bool,
                     help='Use cuda to train model')
 parser.add_argument('--video_folder', default='data/input/test01/', type=str,
                     help='origin video folder')
 parser.add_argument('--widerface_root', default=WIDERFace_ROOT, help='Location of VOC root directory')
 
-args = parser.parse_args()
+# mosaic_scaleの参考値 #1.25 顔, 1.50:マージン大きめ(default)
+# mosaic_densityの参考値 #15:マスク薄め, 35:マスク濃いめ(default)
 
 if args.cuda and torch.cuda.is_available():
     torch.set_default_tensor_type('torch.cuda.FloatTensor')
@@ -93,7 +96,7 @@ def write_to_txt(f, det, event, im_name):
                 format(xmin, ymin, (xmax - xmin + 1), (ymax - ymin + 1), score))
 
 
-def infer(net, img, transform, thresh, cuda, shrink, margin_scale=1.00):
+def infer(net, img, transform, thresh, cuda, shrink):
     if shrink != 1:
         img = cv2.resize(img, None, None, fx=shrink, fy=shrink, interpolation=cv2.INTER_LINEAR)
 
@@ -109,7 +112,6 @@ def infer(net, img, transform, thresh, cuda, shrink, margin_scale=1.00):
                               img.shape[1] / shrink, img.shape[0] / shrink])
         det = []
         
-        margin_scale =  margin_scale - 1.00 #倍率
         for i in range(detections.size(1)):
             j = 0
             while detections[0, i, j, 0] >= thresh:
@@ -117,7 +119,6 @@ def infer(net, img, transform, thresh, cuda, shrink, margin_scale=1.00):
                 # label_name = labelmap[i-1]
                 pt = (detections[0, i, j, 1:] * scale).cpu().numpy()
                 
-                pt[0], pt[1], pt[2], pt[3] = pt[0]*(1.00-margin_scale), pt[1]*(1.00-margin_scale), pt[2]*(1.00+margin_scale), pt[3]*(1.00+margin_scale)
                 coords = (pt[0], pt[1], pt[2], pt[3])
                 det.append([pt[0], pt[1], pt[2], pt[3], score])
                 j += 1
@@ -130,13 +131,14 @@ def infer(net, img, transform, thresh, cuda, shrink, margin_scale=1.00):
         return det
 
 
-def save_mosaiced_img(im, dets, save_folder, image_name, frame_id, scale=1.25,thresh=0.5, kernel_size=35):
+def save_mosaiced_img(im, dets, save_folder, image_name, frame_id, scale=1.50,thresh=0.5, kernel_size=35):
     """Draw detected bounding boxes."""
     class_name = 'face'
     inds = np.where(dets[:, -1] >= thresh)[0]
     img_height = im.shape[0]
     img_width = im.shape[1]
     mask_img = np.ones(im.shape, np.int8)
+
     
     blur_img = cv2.blur(im, (kernel_size, kernel_size))
     if len(inds) == 0:
@@ -254,11 +256,6 @@ def main():
 
     transform = TestBaseTransform((104, 117, 123))
     thresh = cfg['conf_thresh']
-    
-#     margin_scale = 1.00 # 検出された領域をモザイク化 
-    margin_scale = 1.01 # 周りをひとまわり大きくモザイク化 
-#     kernel_size = 15 # マスク薄め
-    kernel_size = 35 # マスク濃いめ
 
     video_folder_list = sorted([filename for filename in os.listdir(args.video_folder) if not filename.startswith('.')]) #隠しフォルダを除く
     for video in video_folder_list:
@@ -285,7 +282,7 @@ def main():
             print('prossing:', frame_id)
             if det[0][0] == 0.1:
                 cv2.imwrite(save_folder_img + video_name + '_' + '{:09d}.jpg'.format(frame_id), frame)
-            save_mosaiced_img(frame, det, save_folder_img, video_name, frame_id, scale=args.area_scale,thresh=args.visual_threshold, kernel_size)
+            save_mosaiced_img(frame, det, save_folder_img, video_name, frame_id, scale=args.mosaic_scale,thresh=args.visual_threshold, kernel_size= args.mosaic_density)
         save_folder_list = sorted([filename for filename in os.listdir(save_folder_img) if not filename.startswith('.')]) #隠しフォルダを除く
         make_video_from_images(save_folder_img, save_folder_list,
                                os.path.join(save_folder_video, video_name + '.mp4'),
