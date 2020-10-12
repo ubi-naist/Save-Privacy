@@ -39,15 +39,16 @@ ubi-dl03サーバにコンテナとして作成済み．
 ## Usage
 Run test.py and change parameters of save_folder, video_folder, and video_output with your own configuration. 
 
-### 1. notebooks/data/input以下にマスキング処理をしたい動画の入ったフォルダを配置する．
+### 1. notebooks/data/input以下にマスキング処理をしたい動画/画像の入ったフォルダを配置する．
  
     $ ex) notebooks/data/input/test/Sample01.mp4
+    $ ex) notebooks/data/input/test/Sample02.jpg
 
 
 ### 2. マスキング処理を実行
  
     $ python3 test.py 
-    $ ex) python3 test.py --video_folder data/input/test01/
+    $ ex) python3 test.py --input_folder data/input/test01/
      
 
 
