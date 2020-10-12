@@ -9,7 +9,7 @@ Mosaic pedestrians' faces for protecting their pravicy.
 
 ubi-dl03サーバにコンテナとして作成済み．
 
-## Instalation
+## Installation
 
     $ git clone https://github.com/ubi-naist/Save-Privacy.git
     $ cd Save-Privacy/Mosaic-Face
