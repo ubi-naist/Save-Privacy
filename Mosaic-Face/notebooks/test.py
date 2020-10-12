@@ -127,7 +127,6 @@ def infer(net, img, transform, thresh, cuda, shrink):
         if (len(det)) == 0:
             det = [[0.1, 0.1, 0.2, 0.2, 0.01]]
         det = np.array(det)
-
         keep_index = np.where(det[:, 4] >= 0)[0]
         det = det[keep_index, :]
         return det
@@ -140,7 +139,6 @@ def save_mosaiced_img(im, dets, save_folder, image_name, frame_id, scale=1.5,thr
     img_height = im.shape[0]
     img_width = im.shape[1]
     mask_img = np.ones(im.shape, np.int8)
-
     
     blur_img = cv2.blur(im, (kernel_size, kernel_size))
     if len(inds) == 0:
@@ -167,7 +165,13 @@ def save_mosaiced_img(im, dets, save_folder, image_name, frame_id, scale=1.5,thr
 
     # cv2.imshow('test', im)
     # cv2.waitKey()
-    cv2.imwrite(save_folder + image_name + '_' + '{:09d}.jpg'.format(frame_id), result_img)
+    
+    # 動画
+    if frame_id >= 0:
+        cv2.imwrite(save_folder + image_name + '_' + '{:09d}.jpg'.format(frame_id), result_img)
+    # 画像
+    elif frame_id < 0:
+        cv2.imwrite(save_folder + image_name + '.jpg', result_img)
 
 
 def generate_mask(img_height, img_width, radius, center_x, center_y):
@@ -261,35 +265,56 @@ def main():
 
     video_folder_list = sorted([filename for filename in os.listdir(args.video_folder) if not filename.startswith('.')]) #隠しフォルダを除く
     for video in video_folder_list:
-        frame_id = 0
-        video_name = os.path.splitext(os.path.split(video)[1])[0]
-        cap = cv2.VideoCapture(args.video_folder + video)
-        original_fps = cap.get(cv2.CAP_PROP_FPS)
-        save_folder = args.video_folder.replace("input", "output")
-        save_folder_img = save_folder + "imgs/" 
-        save_folder_video = save_folder + "videos/" 
+        ext = os.path.splitext(os.path.split(video)[1])[1]
+        
+        print(ext)
+        save_folder = args.video_folder.replace("input", "output")       
         if not os.path.exists(save_folder):
             os.makedirs(save_folder)
-            os.makedirs(save_folder_img)
-            os.makedirs(save_folder_video)
-        
-        while True:
-            _, frame = cap.read()
-            if not _:
-                break
-            frame_id += 1
-            # if frame_id<=1358:
-            #     continue
+
+                
+        if ext == ".mp4" or ext == ".MP4":
+            save_folder_tmp = save_folder + "tmp/" 
+            save_folder_video = save_folder + "videos/" 
+            if not os.path.exists(save_folder_tmp):
+                os.makedirs(save_folder_tmp)
+                os.makedirs(save_folder_video)
+            frame_id = 0
+            video_name = os.path.splitext(os.path.split(video)[1])[0]
+            cap = cv2.VideoCapture(args.video_folder + video)
+            original_fps = cap.get(cv2.CAP_PROP_FPS)
+            while True:
+                _, frame = cap.read()
+                if not _:
+                    break
+                frame_id += 1
+                # if frame_id<=1358:
+                #     continue
+                det = infer(net, frame, transform, thresh, cuda, shrink)
+                cv2.imwrite(save_folder_tmp + video_name + '___' + '{:09d}.jpg'.format(frame_id), frame)
+                print('prossing:', frame_id)
+                if det[0][0] == 0.1:
+                    cv2.imwrite(save_folder_tmp + video_name + '_' + '{:09d}.jpg'.format(frame_id), frame)
+                save_mosaiced_img(frame, det, save_folder_tmp, video_name, frame_id, scale=args.mosaic_scale,thresh=args.visual_threshold, kernel_size= args.mosaic_density)
+            save_folder_list = sorted([filename for filename in os.listdir(save_folder_tmp) if not filename.startswith('.')]) #隠しフォルダを除く
+            make_video_from_images(save_folder_tmp, save_folder_list,
+                                   os.path.join(save_folder_video, video_name + '.mp4'),
+                                   fps=original_fps)
+            delete_imgs(save_folder_tmp)
+            
+        elif ext == ".jpg" or ext == ".png": 
+
+            save_folder_img = save_folder + "imgs/" 
+            if not os.path.exists(save_folder_img):
+                os.makedirs(save_folder_img)
+            video_name = os.path.splitext(os.path.split(video)[1])[0]
+            frame_id = -1
+            img_path = args.video_folder+video
+            frame = cv2.imread(img_path)
             det = infer(net, frame, transform, thresh, cuda, shrink)
-            print('prossing:', frame_id)
             if det[0][0] == 0.1:
-                cv2.imwrite(save_folder_img + video_name + '_' + '{:09d}.jpg'.format(frame_id), frame)
+                cv2.imwrite(save_folder_img + video_name +'.jpg', frame)
             save_mosaiced_img(frame, det, save_folder_img, video_name, frame_id, scale=args.mosaic_scale,thresh=args.visual_threshold, kernel_size= args.mosaic_density)
-        save_folder_list = sorted([filename for filename in os.listdir(save_folder_img) if not filename.startswith('.')]) #隠しフォルダを除く
-        make_video_from_images(save_folder_img, save_folder_list,
-                               os.path.join(save_folder_video, video_name + '.mp4'),
-                               fps=original_fps)
-        delete_imgs(save_folder_img)
 
 
 if __name__ == '__main__':
