@@ -93,7 +93,7 @@ def write_to_txt(f, det, event, im_name):
                 format(xmin, ymin, (xmax - xmin + 1), (ymax - ymin + 1), score))
 
 
-def infer(net, img, transform, thresh, cuda, shrink):
+def infer(net, img, transform, thresh, cuda, shrink, margin_scale=1.00):
     if shrink != 1:
         img = cv2.resize(img, None, None, fx=shrink, fy=shrink, interpolation=cv2.INTER_LINEAR)
 
@@ -108,12 +108,16 @@ def infer(net, img, transform, thresh, cuda, shrink):
         scale = torch.Tensor([img.shape[1] / shrink, img.shape[0] / shrink,
                               img.shape[1] / shrink, img.shape[0] / shrink])
         det = []
+        
+        margin_scale =  margin_scale - 1.00 #倍率
         for i in range(detections.size(1)):
             j = 0
             while detections[0, i, j, 0] >= thresh:
                 score = detections[0, i, j, 0]
                 # label_name = labelmap[i-1]
                 pt = (detections[0, i, j, 1:] * scale).cpu().numpy()
+                
+                pt[0], pt[1], pt[2], pt[3] = pt[0]*(1.00-margin_scale), pt[1]*(1.00-margin_scale), pt[2]*(1.00+margin_scale), pt[3]*(1.00+margin_scale)
                 coords = (pt[0], pt[1], pt[2], pt[3])
                 det.append([pt[0], pt[1], pt[2], pt[3], score])
                 j += 1
@@ -126,14 +130,14 @@ def infer(net, img, transform, thresh, cuda, shrink):
         return det
 
 
-def save_mosaiced_img(im, dets, save_folder, image_name, frame_id, scale=1.25,thresh=0.5):
+def save_mosaiced_img(im, dets, save_folder, image_name, frame_id, scale=1.25,thresh=0.5, kernel_size=35):
     """Draw detected bounding boxes."""
     class_name = 'face'
     inds = np.where(dets[:, -1] >= thresh)[0]
     img_height = im.shape[0]
     img_width = im.shape[1]
     mask_img = np.ones(im.shape, np.int8)
-    kernel_size = 15
+    
     blur_img = cv2.blur(im, (kernel_size, kernel_size))
     if len(inds) == 0:
         return
@@ -250,8 +254,11 @@ def main():
 
     transform = TestBaseTransform((104, 117, 123))
     thresh = cfg['conf_thresh']
-
     
+#     margin_scale = 1.00 # 検出された領域をモザイク化 
+    margin_scale = 1.01 # 周りをひとまわり大きくモザイク化 
+#     kernel_size = 15 # マスク薄め
+    kernel_size = 35 # マスク濃いめ
 
     video_folder_list = sorted([filename for filename in os.listdir(args.video_folder) if not filename.startswith('.')]) #隠しフォルダを除く
     for video in video_folder_list:
@@ -278,7 +285,7 @@ def main():
             print('prossing:', frame_id)
             if det[0][0] == 0.1:
                 cv2.imwrite(save_folder_img + video_name + '_' + '{:09d}.jpg'.format(frame_id), frame)
-            save_mosaiced_img(frame, det, save_folder_img, video_name, frame_id, scale=args.area_scale,thresh=args.visual_threshold)
+            save_mosaiced_img(frame, det, save_folder_img, video_name, frame_id, scale=args.area_scale,thresh=args.visual_threshold, kernel_size)
         save_folder_list = sorted([filename for filename in os.listdir(save_folder_img) if not filename.startswith('.')]) #隠しフォルダを除く
         make_video_from_images(save_folder_img, save_folder_list,
                                os.path.join(save_folder_video, video_name + '.mp4'),
