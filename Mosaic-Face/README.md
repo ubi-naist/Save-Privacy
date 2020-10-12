@@ -3,7 +3,7 @@
 
 2020年秋卒業のDang Chenyuさんが作成したものを改変．
 
-モデルには[LightDSFD](https://github.com/lijiannuist/lightDSFD)を利用．(動画を主な対象としているため，　精度低/速度高)
+モデルには[LightDSFD](https://github.com/lijiannuist/lightDSFD)を利用．(動画を主な対象としているため，精度低/速度高)
 
 ## Introduction
 Mosaic pedestrians' faces for protecting their pravicy.
